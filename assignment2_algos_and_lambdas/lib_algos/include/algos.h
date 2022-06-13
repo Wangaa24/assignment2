@@ -19,9 +19,11 @@ namespace saxion {
         template<typename _Iter>
         auto has_all_tasks_assigned(_Iter begin, _Iter end) const noexcept {
             // todo
-            (void)begin; (void)end;
+            //(void)begin; (void)end;
             // returns true if all the tasks in collection have a person assigned to them
-            return false;
+            return std::all_of(begin, end, [](const task &t) {
+                return !t.assignees.empty();
+            });
         }
 
         // 1 point

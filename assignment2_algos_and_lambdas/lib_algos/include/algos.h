@@ -14,10 +14,8 @@
 #include <ctime>
 
 
-
 namespace saxion {
     struct algos {
-
 
         // 1 point
         template<typename _Iter>
@@ -40,8 +38,6 @@ namespace saxion {
         // 3 points
         template <typename _Iter>
         auto remove_asignee_from_all(_Iter begin, _Iter end, const std::string& person) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)person;
             // transforms the tasks (in-place) by removing <person> from the assignees in all the tasks
             std::for_each(begin, end, [&person](task &t){
                 t.assignees.erase(person);
@@ -53,9 +49,9 @@ namespace saxion {
         auto extend_deadlines(_Iter begin, _Iter end, int priority, const task::time_difference_type& extension) const noexcept{
             // transforms the tasks with priority <prio> (in-place) by extending their deadlines with <extension>
             std::transform(begin, end, begin, [priority, extension](task &t){
-               if (t.priority == priority){
+               if (t.priority == priority)
                    t.deadline += extension;
-               }
+
                return t;
             });
         }
@@ -75,14 +71,13 @@ namespace saxion {
             // adds <person> to assignees of the task with id <id>
             // returns false if such a task doesn't exist or if it already has <person> assigned to it
             // otherwise returns true
-            auto t = std::find_if(begin, end, [id](const task &t){
-                return t.id == id;
-            });
+            auto t = std::find_if(begin, end, [id](const task &t){ return t.id == id; });
 
             if (t == end || t->assignees.count(person) > 0)
                 return false;
 
             t->assignees.insert(person);
+
             return true;
         }
 
@@ -124,19 +119,12 @@ namespace saxion {
         // 2 points
         template <typename _Iter>
         std::vector<id_prio> list_sorted_by_prio(_Iter begin, _Iter end) const noexcept{
-            // todo
-            (void)begin; (void)end;
             // returns a vector of pairs <id, priority> of all the tasks. The returned vector must be sorted by priority.
             // If two tasks have the same priority, they are sorted by id (lower id comes first)
             auto v = std::vector<id_prio>(std::distance(begin, end));
 
-
             // transform list of tasks into list of id_prio
-            std::transform(begin, end, v.begin(), [](const task &t){
-                return id_prio{t.id, t.priority};
-            });
-
-
+            std::transform(begin, end, v.begin(), [](const task &t){ return id_prio{t.id, t.priority}; });
 
             std::sort(v.begin(), v.end(), [](id_prio lhs, id_prio rhs){
                 // tuple destructuring
@@ -157,8 +145,6 @@ namespace saxion {
         // 1 point
         template <typename _Cont>
         auto remove_all_finished(_Cont& container) const noexcept{
-            // todo
-            (void)container;
             // removes all the tasks with deadline before or on the time point now() obtained from the system_clock
             // notice that this function takes the whole container as an argument, that's because it's impossible to remove elements using just the iterators.
             auto const timepoint = std::chrono::system_clock::now();
@@ -173,8 +159,6 @@ namespace saxion {
         // 1 point
         template <typename _Iter>
         task& get_nth_to_complete(_Iter begin, _Iter end, int n) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)n;
             // returns a reference to the n-th task to be completed in order of deadlines.
             // deadline ties are resolved by comparing priorities (lower priorities come first)
             auto nth = begin + n;
@@ -213,8 +197,6 @@ namespace saxion {
         // 3 points
         template <typename _Iter, typename _OIter>
         void cost_burndown(_Iter begin, _Iter end, _OIter obegin) const noexcept {
-            // todo
-            (void)begin; (void)end; (void)obegin;
             // you can assume that _OIter is a std::back_insert_iterator to a container of double
 
             // calculates the cost burndown of the tasks and writes the output to the output iterator <obegin>
@@ -248,29 +230,22 @@ namespace saxion {
 //                }
 //                return cost_burndown;
 //            });
-
         }
-
 
         // 1 point
         template <typename _Iter>
         std::pair<task, task> cheapest_and_most_expensive(_Iter begin, _Iter end) const noexcept{
-            // todo
-            (void)begin; (void)end;
             // returns a pair consisting of the least and the most expensive tasks in the collection
             auto [min, max] = std::minmax_element(begin, end, [](const task &lhs, const task &rhs){
                 return lhs.cost < rhs.cost;
             });
 
             return std::make_pair(*min, *max);
-
         }
 
         // 1 point
         template <typename _Iter>
         auto total_cost(_Iter begin, _Iter end) const noexcept{
-            // todo
-            (void)begin; (void)end;
             // returns the total cost of all the tasks in the collection
             return std::accumulate(begin, end, 0.0, [](double current, const task &t){
                 return current + t.cost;
@@ -280,8 +255,6 @@ namespace saxion {
         // 2 points
         template <typename _Iter>
         double total_cost_of(_Iter begin, _Iter end, const std::string& assignee) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)assignee;
             // returns the cost of all the tasks that have <assignee> assigned to them
             return std::accumulate(begin, end, 0.0, [&assignee](double current, const task &t){
                 if (t.assignees.count(assignee) > 0)
@@ -294,10 +267,10 @@ namespace saxion {
         // 1 point
         template <typename _Iter>
         _Iter separate_by_deadline(_Iter begin, _Iter end, const task::time_type& deadline) const noexcept {
-            // todo
-            (void)begin; (void)end; (void)deadline;
             // reorders the tasks in such a way that all tasks with deadlines before <deadline> precede the tasks with deadline on or after <deadline>
             // returns the iterator to the last task in the first group (with deadlines before <deadline>)
+
+            // minus one because we want the first group and since std::partition returns iterator to the second group.
             return std::partition(begin, end, [&deadline](const task &t){
                 return t.deadline < deadline;
             }) - 1;
@@ -306,8 +279,6 @@ namespace saxion {
         // 3 points
         template <typename _Iter>
         double estimate_workload(_Iter begin, _Iter end, const std::string& person) const {
-            // todo
-            (void)begin; (void)end; (void)person;
             // estimates the workload of a <person>
             // the estimation is done as follows:
             // - out of all the tasks, half of them (n_s) are chosen at random (sampled)
@@ -336,8 +307,6 @@ namespace saxion {
         // 2 points
         template <typename _Iter>
         auto average_cost_of_prio(_Iter begin ,_Iter end, int priority) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)priority;
             // calculates and returns the average cost of tasks with priority <priority>
 
             auto count = 0;

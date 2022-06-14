@@ -10,6 +10,10 @@
 #include <random>
 #include <vector>
 #include "task.h"
+#include <iostream>
+#include <ctime>
+
+
 
 namespace saxion {
     struct algos {
@@ -18,8 +22,6 @@ namespace saxion {
         // 1 point
         template<typename _Iter>
         auto has_all_tasks_assigned(_Iter begin, _Iter end) const noexcept {
-            // todo
-            //(void)begin; (void)end;
             // returns true if all the tasks in collection have a person assigned to them
             return std::all_of(begin, end, [](const task &t) {
                 return !t.assignees.empty();
@@ -29,10 +31,10 @@ namespace saxion {
         // 1 point
         template <typename _Iter>
         bool has_task_with_deadline_afer(_Iter begin, _Iter end, const task::time_type& deadline) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)deadline;
             // returns true if any of the tasks in collection have a deadline after <deadline>
-            return false;
+            return std::any_of(begin, end, [deadline](const task &t){
+                return t.deadline > deadline;
+            });
         }
 
         // 3 points
@@ -41,43 +43,60 @@ namespace saxion {
             // todo
             (void)begin; (void)end; (void)person;
             // transforms the tasks (in-place) by removing <person> from the assignees in all the tasks
+            std::for_each(begin, end, [&person](task &t){
+                t.assignees.erase(person);
+            });
         }
 
         // 1 point
         template <typename _Iter>
         auto extend_deadlines(_Iter begin, _Iter end, int priority, const task::time_difference_type& extension) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)priority; (void)extension;
             // transforms the tasks with priority <prio> (in-place) by extending their deadlines with <extension>
+            std::transform(begin, end, begin, [priority, extension](task &t){
+               if (t.priority == priority){
+                   t.deadline += extension;
+               }
+               return t;
+            });
         }
 
         // 1 point
         template <typename _Iter>
         auto count_tasks_with_deadlines_before(_Iter begin, _Iter end, const task::time_type& deadline) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)deadline;
             // returns the count of tasks with a deadline before <deadline>
-            return -1;
+            return std::count_if(begin, end, [&deadline](const task &t){
+                return t.deadline < deadline;
+            });
         }
 
         // 2 points
         template <typename _Iter>
         auto add_assignee_to_task(_Iter begin, _Iter end, int id, std::string person) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)id; (void)person;
             // adds <person> to assignees of the task with id <id>
             // returns false if such a task doesn't exist or if it already has <person> assigned to it
             // otherwise returns true
-            return false;
+            auto t = std::find_if(begin, end, [id](const task &t){
+                return t.id == id;
+            });
+
+            if (t == end || t->assignees.count(person) > 0)
+                return false;
+
+            t->assignees.insert(person);
+            return true;
         }
 
         // 1 point
         template <typename _Iter>
         std::vector<task> get_tasks_with_priority(_Iter begin, _Iter end, int priority) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)priority;
             // returns a vector with copies of tasks with priority <priority>
-            return std::vector<task>();
+            auto lambda = [priority](const task &t){ return t.priority == priority; };
+            auto count = std::count_if(begin, end, lambda);
+            auto tasks = std::vector<task>(count);
+
+            std::copy_if(begin, end, tasks.begin(), lambda);
+
+            return tasks;
         }
 
         // 2 points move_if ;)
@@ -109,7 +128,30 @@ namespace saxion {
             (void)begin; (void)end;
             // returns a vector of pairs <id, priority> of all the tasks. The returned vector must be sorted by priority.
             // If two tasks have the same priority, they are sorted by id (lower id comes first)
-            return std::vector<id_prio>();
+            auto v = std::vector<id_prio>(std::distance(begin, end));
+
+
+            // transform list of tasks into list of id_prio
+            std::transform(begin, end, v.begin(), [](const task &t){
+                return id_prio{t.id, t.priority};
+            });
+
+
+
+            std::sort(v.begin(), v.end(), [](id_prio lhs, id_prio rhs){
+                // tuple destructuring
+                auto [l_id, l_prio] = lhs;
+                auto [r_id, r_prio] = rhs;
+
+                if (l_prio < r_prio)
+                    return true;
+                else if (l_prio == r_prio and l_id < r_id)
+                    return true;
+                else
+                    return false;
+            });
+
+            return v;
         }
 
         // 1 point
@@ -119,6 +161,12 @@ namespace saxion {
             (void)container;
             // removes all the tasks with deadline before or on the time point now() obtained from the system_clock
             // notice that this function takes the whole container as an argument, that's because it's impossible to remove elements using just the iterators.
+            auto const timepoint = std::chrono::system_clock::now();
+            auto const iter = std::remove_if(container.begin(), container.end(), [timepoint](const task &t){
+                return t.deadline <= timepoint;
+            });
+
+            container.erase(iter, container.end());
         }
 
 
@@ -129,17 +177,37 @@ namespace saxion {
             (void)begin; (void)end; (void)n;
             // returns a reference to the n-th task to be completed in order of deadlines.
             // deadline ties are resolved by comparing priorities (lower priorities come first)
-            return *begin;
+            auto nth = begin + n;
+
+            std::nth_element(begin, nth, end, [](const task &lhs, const task &rhs){
+                if (lhs.deadline < rhs.deadline)
+                    return true;
+                else if (lhs.deadline == rhs.deadline and lhs.priority < rhs.priority)
+                    return true;
+                else
+                    return false;
+            });
+
+            return *nth;
         }
 
         // 1 point
         template <typename _Iter>
         std::vector<task> get_first_n_to_complete(_Iter begin, _Iter end, int n) const noexcept{
-            // todo
-            (void)begin; (void)end; (void)n;
             // returns a vector with copies of first n tasks to complete by deadline (ties resolved with priority).
             // The tasks in this vector must me sorted by deadline (ties resolved with priority)
-            return std::vector<task>();
+            auto v = std::vector<task>(n);
+            std::sort(begin, end, [](const task &lhs, const task &rhs){
+                if (lhs.deadline < rhs.deadline)
+                    return true;
+                else if (lhs.deadline == rhs.deadline and lhs.priority < rhs.priority)
+                    return true;
+                else
+                    return false;
+            });
+            std::copy_n(begin, n, v.begin());
+
+            return v;
         }
 
         // 3 points
@@ -164,6 +232,23 @@ namespace saxion {
              * Therefore the cost burndown (cumulative cost) is: [23.0, 34.0, 60.0, 103.0].
              * Those numbers in this order must be outputted to the obegin iterator.
              */
+
+//            auto cost_burndown = 0.0;
+//            auto last_deadline = std::chrono::system_clock::now();
+//
+//            std::sort(begin, end, [](const task &lhs, const task &rhs){
+//                return lhs.deadline < rhs.deadline;
+//            });
+//
+//            // mutable otherwise we cant change cost_burndown
+//            std::transform(begin, end, obegin, [&cost_burndown, &last_deadline](const task &t) mutable {
+//                cost_burndown += t.cost;
+//                if (t.deadline == last_deadline){
+//
+//                }
+//                return cost_burndown;
+//            });
+
         }
 
 
@@ -173,7 +258,12 @@ namespace saxion {
             // todo
             (void)begin; (void)end;
             // returns a pair consisting of the least and the most expensive tasks in the collection
-            return {task(), task()};
+            auto [min, max] = std::minmax_element(begin, end, [](const task &lhs, const task &rhs){
+                return lhs.cost < rhs.cost;
+            });
+
+            return std::make_pair(*min, *max);
+
         }
 
         // 1 point
@@ -182,7 +272,9 @@ namespace saxion {
             // todo
             (void)begin; (void)end;
             // returns the total cost of all the tasks in the collection
-            return 0.0;
+            return std::accumulate(begin, end, 0.0, [](double current, const task &t){
+                return current + t.cost;
+            });
         }
 
         // 2 points
@@ -191,7 +283,12 @@ namespace saxion {
             // todo
             (void)begin; (void)end; (void)assignee;
             // returns the cost of all the tasks that have <assignee> assigned to them
-            return 0.0;
+            return std::accumulate(begin, end, 0.0, [&assignee](double current, const task &t){
+                if (t.assignees.count(assignee) > 0)
+                    return current + t.cost;
+                else
+                    return current;
+            });
         }
 
         // 1 point
@@ -201,7 +298,9 @@ namespace saxion {
             (void)begin; (void)end; (void)deadline;
             // reorders the tasks in such a way that all tasks with deadlines before <deadline> precede the tasks with deadline on or after <deadline>
             // returns the iterator to the last task in the first group (with deadlines before <deadline>)
-            return begin;
+            return std::partition(begin, end, [&deadline](const task &t){
+                return t.deadline < deadline;
+            }) - 1;
         }
 
         // 3 points
@@ -240,7 +339,19 @@ namespace saxion {
             // todo
             (void)begin; (void)end; (void)priority;
             // calculates and returns the average cost of tasks with priority <priority>
-            return 0.0;
+
+            auto count = 0;
+            auto total = std::accumulate(begin, end, 0.0, [priority, &count](double current, const task &t) mutable {
+               if (t.priority == priority){
+                   count += 1;
+                   return current + t.cost;
+               }
+               else{
+                   return current;
+               }
+            });
+
+            return total / count;
         }
     };
 }

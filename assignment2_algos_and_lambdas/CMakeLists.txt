@@ -16,7 +16,7 @@ set_target_properties(${target} PROPERTIES CXX_EXTENSIONS OFF)
 # Set options for gnu-like
 target_compile_options(${target} PRIVATE
         # set warnings for all build types
-        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer>
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer -Wno-unused-parameter>
         # debug optimisation in Debug
         $<$<AND:$<CXX_COMPILER_ID:GNU,Clang,AppleClang>,$<CONFIG:Release>>:-O3>
         # O3 optimisation Release

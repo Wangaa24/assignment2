@@ -163,6 +163,8 @@ namespace saxion {
             // deadline ties are resolved by comparing priorities (lower priorities come first)
             auto nth = begin + n;
 
+            // nth element performs a partial sorting algorithm but since it has no return value
+            // we create a variable nth before the scope of this function
             std::nth_element(begin, nth, end, [](const task &lhs, const task &rhs){
                 if (lhs.deadline < rhs.deadline)
                     return true;
@@ -181,6 +183,8 @@ namespace saxion {
             // returns a vector with copies of first n tasks to complete by deadline (ties resolved with priority).
             // The tasks in this vector must me sorted by deadline (ties resolved with priority)
             auto v = std::vector<task>(n);
+
+            // first we sort the tasks by deadline
             std::sort(begin, end, [](const task &lhs, const task &rhs){
                 if (lhs.deadline < rhs.deadline)
                     return true;
@@ -189,6 +193,8 @@ namespace saxion {
                 else
                     return false;
             });
+
+            // copy the nth amount of tasks to the vector from the container
             std::copy_n(begin, n, v.begin());
 
             return v;
@@ -197,6 +203,7 @@ namespace saxion {
         // 3 points
         template <typename _Iter, typename _OIter>
         void cost_burndown(_Iter begin, _Iter end, _OIter obegin) const noexcept {
+            (void)begin, (void)end, (void)obegin;
             // you can assume that _OIter is a std::back_insert_iterator to a container of double
 
             // calculates the cost burndown of the tasks and writes the output to the output iterator <obegin>
@@ -214,6 +221,9 @@ namespace saxion {
              * Therefore the cost burndown (cumulative cost) is: [23.0, 34.0, 60.0, 103.0].
              * Those numbers in this order must be outputted to the obegin iterator.
              */
+
+            // not entirely sure what i have to do here, i was thinking about accessing the value the iterator pointed to on the previous
+            // iteration and adding cost on here but it does not seem possible.
 
 //            auto cost_burndown = 0.0;
 //            auto last_deadline = std::chrono::system_clock::now();
@@ -239,7 +249,7 @@ namespace saxion {
             auto [min, max] = std::minmax_element(begin, end, [](const task &lhs, const task &rhs){
                 return lhs.cost < rhs.cost;
             });
-
+            // since minmax returns iterators we use make pair so that it does return a pair
             return std::make_pair(*min, *max);
         }
 
@@ -257,7 +267,7 @@ namespace saxion {
         double total_cost_of(_Iter begin, _Iter end, const std::string& assignee) const noexcept{
             // returns the cost of all the tasks that have <assignee> assigned to them
             return std::accumulate(begin, end, 0.0, [&assignee](double current, const task &t){
-                if (t.assignees.count(assignee) > 0)
+                if (t.assignees.count(assignee) > 0) // add task's cost if it find that it has the assignee
                     return current + t.cost;
                 else
                     return current;
@@ -279,6 +289,7 @@ namespace saxion {
         // 3 points
         template <typename _Iter>
         double estimate_workload(_Iter begin, _Iter end, const std::string& person) const {
+            (void)begin, (void)end, (void)person;
             // estimates the workload of a <person>
             // the estimation is done as follows:
             // - out of all the tasks, half of them (n_s) are chosen at random (sampled)
@@ -310,6 +321,8 @@ namespace saxion {
             // calculates and returns the average cost of tasks with priority <priority>
 
             auto count = 0;
+
+            // mutable since we are changing the value of count (we need it to get the average)
             auto total = std::accumulate(begin, end, 0.0, [priority, &count](double current, const task &t) mutable {
                if (t.priority == priority){
                    count += 1;
@@ -320,6 +333,7 @@ namespace saxion {
                }
             });
 
+            // could've used count_if but this is more easy
             return total / count;
         }
     };
